@@ -3,16 +3,17 @@
     "image": "mcr.microsoft.com/vscode/devcontainers/python:3.9",
     "settings": {
       "terminal.integrated.shell.linux": "/bin/bash"
-    },
+      },
     "extensions": [
       "davidanson.vscode-markdownlint",
       "hashicorp.terraform",
       "ms-azuretools.vscode-docker",
       "ms-python.python",
       "tamasfe.even-better-toml"
-  ],
+      ],
     "features": {
       "azure-cli": "latest"
     },
-    "postCreateCommand": "/bin/bash ./.devcontainer/post-install.sh"
-  }
+    "postCreateCommand": "/bin/bash ./.devcontainer/post-install.sh",
+    "runArgs": ["--env-file",".devcontainer/devcontainer.env"]
+}
