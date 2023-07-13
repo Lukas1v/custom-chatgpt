@@ -3,13 +3,13 @@ import openai
 import streamlit as st
 from streamlit_chat import message
 
-# Setting page title and header
-st.set_page_config(page_title="AVA", page_icon=":robot_face:")
-st.markdown("<h1 style='text-align: center;'>AVA - a totally harmless chatbot </h1>", unsafe_allow_html=True)
-
-# Set org ID and API key
-# openai.organization = "<YOUR_OPENAI_ORG_ID>"
-openai.api_key = PASSWORD = os.environ.get('OPENAI_API_KEY')
+## Initialization
+#Azure openai details
+openai.api_type = "azure"
+openai.api_base = os.getenv("OPENAI_ENDPOINT") 
+openai.api_version = "2023-05-15"
+openai.api_key = os.getenv("OPENAI_API_KEY")
+engine='custom-chatgpt-model'
 
 # Initialise session state variables
 if 'generated' not in st.session_state:
@@ -29,18 +29,23 @@ if 'total_tokens' not in st.session_state:
 if 'total_cost' not in st.session_state:
     st.session_state['total_cost'] = 0.0
 
-# Sidebar - let user choose model, show total cost of current conversation, and let user clear the current conversation
+#page title
+st.set_page_config(page_title="LVE Chatbot", page_icon=":robot_face:")
+
+
+## Sidebar
+# let user choose model, show total cost of current conversation, and let user clear the current conversation
 st.sidebar.title("Sidebar")
-model_name = st.sidebar.radio("Choose a model:", ("GPT-3.5", "GPT-4"))
+model_name = st.sidebar.radio("Choose a model:", ("GPT-3.5", "GPT-4 (under development)"))
 counter_placeholder = st.sidebar.empty()
 counter_placeholder.write(f"Total cost of this conversation: ${st.session_state['total_cost']:.5f}")
 clear_button = st.sidebar.button("Clear Conversation", key="clear")
 
-# Map model names to OpenAI model IDs
+# Map model names to Deployment id's, only 3.5 is available on Azure
 if model_name == "GPT-3.5":
-    model = "gpt-3.5-turbo"
+    engine = engine
 else:
-    model = "gpt-4"
+    engine = engine
 
 # reset everything
 if clear_button:
@@ -57,12 +62,16 @@ if clear_button:
     counter_placeholder.write(f"Total cost of this conversation: ${st.session_state['total_cost']:.5f}")
 
 
+## Main page
+# Setting  header
+st.markdown("<h1 style='text-align: center;'>Custom Chatbot by LVE Consulting </h1>", unsafe_allow_html=True)
+
 # generate a response
 def generate_response(prompt):
     st.session_state['messages'].append({"role": "user", "content": prompt})
 
     completion = openai.ChatCompletion.create(
-        model=model,
+        engine=engine,
         messages=st.session_state['messages']
     )
     response = completion.choices[0].message.content
@@ -75,9 +84,8 @@ def generate_response(prompt):
     return response, total_tokens, prompt_tokens, completion_tokens
 
 
-# container for chat history
+# container for chat history and text box
 response_container = st.container()
-# container for text box
 container = st.container()
 
 with container:

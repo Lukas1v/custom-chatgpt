@@ -17,7 +17,7 @@ resource "azurerm_cognitive_account" "openai" {
   kind                          = "OpenAI"
   custom_subdomain_name         = "lve-custom-chatgpt"
   sku_name                      = "S0" #S0
-  public_network_access_enabled = false
+  public_network_access_enabled = true #change to false
   identity {
     type = "SystemAssigned"
   }
