@@ -2,6 +2,7 @@ import os
 import openai
 import streamlit as st
 from streamlit_chat import message
+import streamlit_ace as st_ace
 
 ## Initialization
 #Azure openai details
@@ -16,7 +17,7 @@ class chatBot():
         #Azure openai engine
         self.engine_v35='custom-chatgpt-model'
         self.engine_v40='custom-chatgpt-model'
-        self.msg_system = {"role": "system", "content": "You are a assistant named Simon who only talks about cycling"}
+        self.msg_system = {"role": "system", "content": "You are a helpful assistant named Simon"}
         
         # Initialise streamlit and set page title
         st.set_page_config(page_title="LVE Chatbot", page_icon=":robot_face:")
@@ -25,9 +26,12 @@ class chatBot():
         self.init_state()
 
         # Setting  header and sidebar static properties
-        st.markdown("<h1 style='text-align: center;'>AIncompetence </h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center;'> LVE Custom ChatGPT </h1>", unsafe_allow_html=True)
         st.sidebar.title("Sidebar")
         self.counter_placeholder = st.sidebar.empty()
+        # containers for chat history and text box
+        self.response_container = st.container()  
+        self.container = st.container()
 
 
     def init_state(self):
@@ -48,8 +52,6 @@ class chatBot():
             st.session_state['total_tokens'] = []
         if 'total_cost' not in st.session_state:
             st.session_state['total_cost'] = 0.0
-
-
 
 
     def clear_state(self):
@@ -95,7 +97,7 @@ class chatBot():
     
 
     def run(self):
-        # ## Sidebar
+        ## Sidebar
         # let user choose model, show total cost of current conversation, and let user clear the current conversation     
         self.counter_placeholder.write(f"Total cost of this conversation: ${st.session_state['total_cost']:.5f}")
         clear_button = st.sidebar.button("Clear Conversation", key="clear")
@@ -107,18 +109,12 @@ class chatBot():
         # reset everything
         if clear_button:
             self.clear()
+  
+        ## Main screen
+        with self.container:            
+            user_input = st.chat_input("You:", key='input')
 
-        # container for chat history and text box
-        container = st.container()
-        response_container = st.container()  
-
-        with container:
-            with st.form(key='my_form', clear_on_submit=True):
-                user_input = st.text_area("You:", key='input', height=100)
-                submit_button = st.form_submit_button(label='Send')
-
-            #submit with enter: https://discuss.streamlit.io/t/capture-enter-key-press-event-in-text-input/5862/3
-            if submit_button and user_input:
+            if user_input:
                 output, total_tokens, prompt_tokens, completion_tokens = self.generate_response(user_input, engine)
                 st.session_state['past'].append(user_input)
                 st.session_state['generated'].append(output)
@@ -135,7 +131,7 @@ class chatBot():
                 st.session_state['total_cost'] += cost
 
         if st.session_state['generated']:
-            with response_container:
+            with self.response_container:
                 for i in range(len(st.session_state['generated'])):
                     message(st.session_state["past"][i], is_user=True, key=str(i) + '_user')
                     message(st.session_state["generated"][i], key=str(i))
