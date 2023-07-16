@@ -6,7 +6,7 @@ sudo apt-get update
 sudo apt-get install -y --no-install-recommends apt-utils dialog dnsutils httpie wget unzip curl jq
 DEBIAN_FRONTEND=dialog
 
-# export $(grep -v '^#' devcontainer.env | xargs)
+# export $(grep -v '^#' .devcontainer/devcontainer.env | xargs)
 
 #install python packages
 pip install --upgrade pip

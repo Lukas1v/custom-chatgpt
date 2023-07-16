@@ -16,10 +16,21 @@ class chatBot():
         #Azure openai engine
         self.engine_v35='custom-chatgpt-model'
         self.engine_v40='custom-chatgpt-model'
+        self.msg_system = {"role": "system", "content": "You are a assistant named Simon who only talks about cycling"}
         
         # Initialise streamlit and set page title
         st.set_page_config(page_title="LVE Chatbot", page_icon=":robot_face:")
 
+        # Initialise state
+        self.init_state()
+
+        # Setting  header and sidebar static properties
+        st.markdown("<h1 style='text-align: center;'>AIncompetence </h1>", unsafe_allow_html=True)
+        st.sidebar.title("Sidebar")
+        self.counter_placeholder = st.sidebar.empty()
+
+
+    def init_state(self):
         # Initialise session state variables
         if 'generated' not in st.session_state:
             st.session_state['generated'] = []
@@ -27,7 +38,7 @@ class chatBot():
             st.session_state['past'] = []
         if 'messages' not in st.session_state:
             st.session_state['messages'] = [
-                {"role": "system", "content": "You are a helpful assistant."}
+                self.msg_system
             ]
         if 'model_name' not in st.session_state:
             st.session_state['model_name'] = []
@@ -37,18 +48,16 @@ class chatBot():
             st.session_state['total_tokens'] = []
         if 'total_cost' not in st.session_state:
             st.session_state['total_cost'] = 0.0
-        # self.clear_state()
 
-        # Setting  header and sidebar static properties
-        st.markdown("<h1 style='text-align: center;'>Custom Chatbot by LVE Consulting </h1>", unsafe_allow_html=True)
-        st.sidebar.title("Sidebar")
-        self.counter_placeholder = st.sidebar.empty()
+
+
 
     def clear_state(self):
         st.session_state['generated'] = []
         st.session_state['past'] = []
         st.session_state['messages'] = [
-            {"role": "system", "content": "You are a helpful assistant."}
+            self.msg_system
+            # {"role": "system", "content": "You are a helpful assistant."}
         ]
         st.session_state['number_tokens'] = []
         st.session_state['model_name'] = []
@@ -66,6 +75,24 @@ class chatBot():
     def clear(self):
         self.clear_state
         self.counter_placeholder.write(f"Total cost of this conversation: ${st.session_state['total_cost']:.5f}")
+    
+    
+    def generate_response(self,prompt, engine):
+        st.session_state['messages'].append({"role": "user", "content": prompt})
+
+        completion = openai.ChatCompletion.create(
+            engine=engine,
+            messages=st.session_state['messages']
+        )
+        response = completion.choices[0].message.content
+        st.session_state['messages'].append({"role": "assistant", "content": response})
+
+        # print(st.session_state['messages'])
+        total_tokens = completion.usage.total_tokens
+        prompt_tokens = completion.usage.prompt_tokens
+        completion_tokens = completion.usage.completion_tokens
+        return response, total_tokens, prompt_tokens, completion_tokens
+    
 
     def run(self):
         # ## Sidebar
@@ -81,35 +108,18 @@ class chatBot():
         if clear_button:
             self.clear()
 
-        ## generate a response
-        def generate_response(prompt):
-            st.session_state['messages'].append({"role": "user", "content": prompt})
-
-            completion = openai.ChatCompletion.create(
-                engine=engine,
-                messages=st.session_state['messages']
-            )
-            response = completion.choices[0].message.content
-            st.session_state['messages'].append({"role": "assistant", "content": response})
-
-            # print(st.session_state['messages'])
-            total_tokens = completion.usage.total_tokens
-            prompt_tokens = completion.usage.prompt_tokens
-            completion_tokens = completion.usage.completion_tokens
-            return response, total_tokens, prompt_tokens, completion_tokens
-
-
         # container for chat history and text box
-        response_container = st.container()
         container = st.container()
+        response_container = st.container()  
 
         with container:
             with st.form(key='my_form', clear_on_submit=True):
                 user_input = st.text_area("You:", key='input', height=100)
                 submit_button = st.form_submit_button(label='Send')
 
+            #submit with enter: https://discuss.streamlit.io/t/capture-enter-key-press-event-in-text-input/5862/3
             if submit_button and user_input:
-                output, total_tokens, prompt_tokens, completion_tokens = generate_response(user_input)
+                output, total_tokens, prompt_tokens, completion_tokens = self.generate_response(user_input, engine)
                 st.session_state['past'].append(user_input)
                 st.session_state['generated'].append(output)
                 st.session_state['model_name'].append(model_name)
