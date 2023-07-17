@@ -75,12 +75,12 @@ class chatBot():
         if model_name == "GPT-3.5":
             engine = self.engine_v35
         else:
-            engine = self.engine_v35 
+            engine = self.engine_v40 
         return engine
     
     def clear(self):
-        self.clear_state
-        self.counter_placeholder.write(f"Total cost of this conversation: ${st.session_state['total_cost']:.5f}")
+        self.clear_state()
+        self.counter_placeholder.write(f"Total cost of this conversation: €{st.session_state['total_cost']:.5f}")
     
     
     def generate_response(self,prompt, engine):
@@ -100,9 +100,10 @@ class chatBot():
         completion_tokens = completion.usage.completion_tokens
         return response, total_tokens, prompt_tokens, completion_tokens
     
-    def fetch_sidebar(self): #TODO
-        self.counter_placeholder.write(f"Total cost of this conversation: ${st.session_state['total_cost']:.5f}")
-        
+
+    def fetch_sidebar(self):        
+        # let user choose model, show total cost of current conversation, and let user clear the current conversation  
+        self.counter_placeholder.write(f"Total cost of this conversation: €{st.session_state['total_cost']:.5f}")        
 
         # Map model names to Deployment id's, only 3.5 is available on Azure
         model_name = st.sidebar.radio("Choose a model:", ("GPT-3.5", "GPT-4 (under development)"))
@@ -114,18 +115,9 @@ class chatBot():
     
 
     def run(self):
-        ## Sidebar
-        # let user choose model, show total cost of current conversation, and let user clear the current conversation     
-        self.counter_placeholder.write(f"Total cost of this conversation: ${st.session_state['total_cost']:.5f}")
+   
         clear_button = st.sidebar.button("Clear Conversation", key="clear")  
-
-        # Map model names to Deployment id's, only 3.5 is available on Azure
-        model_name = st.sidebar.radio("Choose a model:", ("GPT-3.5", "GPT-4 (under development)"))
-        engine = self.set_model(model_name)
-        #set temperature with slider
-        temp_slider = st.sidebar.slider("Temperature", min_value=0.1, max_value=2.0, value=0.4, step=0.1)
-
-        # model_name, engine, temp_slider = self.fetch_sidebar()
+        model_name, engine, temp_slider = self.fetch_sidebar()
 
         # reset everything
         if clear_button:
@@ -146,9 +138,9 @@ class chatBot():
 
                 # from https://openai.com/pricing#language-models
                 if model_name == "GPT-3.5":
-                    cost = total_tokens * 0.002 / 1000
+                    cost = total_tokens * 0.001835 / 1000
                 else:
-                    cost = (prompt_tokens * 0.03 + completion_tokens * 0.06) / 1000
+                    cost = (prompt_tokens * 0.028 + completion_tokens * 0.056) / 1000
                 st.session_state['cost'].append(cost)
                 st.session_state['total_cost'] += cost
 
@@ -157,9 +149,6 @@ class chatBot():
                 for i in range(len(st.session_state['generated'])):
                     message(st.session_state["past"][i], is_user=True, key=str(i) + '_user')
                     message(st.session_state["generated"][i], key=str(i))
-                    st.write(
-                        f"Model used: {st.session_state['model_name'][i]}; Number of tokens: {st.session_state['total_tokens'][i]}; Cost: ${st.session_state['cost'][i]:.5f}")
-                    self.counter_placeholder.write(f"Total cost of this conversation: ${st.session_state['total_cost']:.5f}")
 
 
 if __name__ == '__main__':
