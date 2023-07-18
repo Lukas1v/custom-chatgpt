@@ -101,7 +101,7 @@ class chatBot():
         return response, total_tokens, prompt_tokens, completion_tokens
     
 
-    def fetch_sidebar(self):        
+    def fetch_sidebar_input(self):        
         # let user choose model, show total cost of current conversation, and let user clear the current conversation  
         self.counter_placeholder.write(f"Total cost of this conversation: €{st.session_state['total_cost']:.5f}")        
 
@@ -113,42 +113,52 @@ class chatBot():
 
         return model_name, engine, temp_slider
     
+   
+    def fetch_main_input(self, model_name, temp_slider, engine):
+        user_input = st.chat_input("You:", key='input')
+        if user_input:
+            output, total_tokens, prompt_tokens, completion_tokens = self.generate_response(user_input, engine)
+            st.session_state['past'].append(user_input)
+            st.session_state['generated'].append(output)
+            st.session_state['model_name'].append(model_name)
+            st.session_state['total_tokens'].append(total_tokens)
+            st.session_state['temperature'] = temp_slider
+
+            # from https://openai.com/pricing#language-models
+            if model_name == "GPT-3.5":
+                cost = total_tokens * 0.001835 / 1000
+            else:
+                cost = (prompt_tokens * 0.028 + completion_tokens * 0.056) / 1000
+            st.session_state['cost'].append(cost)
+            st.session_state['total_cost'] += cost
+
+
+    def update_chat(self):
+        for i in range(len(st.session_state['generated'])):
+            message(st.session_state["past"][i], is_user=True, key=str(i) + '_user')
+            message(st.session_state["generated"][i], key=str(i))
+
 
     def run(self):
-   
+        ## Sidebar
+        # fetch user input from sidebar
         clear_button = st.sidebar.button("Clear Conversation", key="clear")  
-        model_name, engine, temp_slider = self.fetch_sidebar()
+        model_name, engine, temp_slider = self.fetch_sidebar_input()
 
         # reset everything
         if clear_button:
             self.clear()
-
  
         ## Main screen
+        # Collect prompt
         with self.container:            
-            user_input = st.chat_input("You:", key='input')
+            self.fetch_main_input(model_name, temp_slider, engine)
 
-            if user_input:
-                output, total_tokens, prompt_tokens, completion_tokens = self.generate_response(user_input, engine)
-                st.session_state['past'].append(user_input)
-                st.session_state['generated'].append(output)
-                st.session_state['model_name'].append(model_name)
-                st.session_state['total_tokens'].append(total_tokens)
-                st.session_state['temperature'] = temp_slider
-
-                # from https://openai.com/pricing#language-models
-                if model_name == "GPT-3.5":
-                    cost = total_tokens * 0.001835 / 1000
-                else:
-                    cost = (prompt_tokens * 0.028 + completion_tokens * 0.056) / 1000
-                st.session_state['cost'].append(cost)
-                st.session_state['total_cost'] += cost
-
+        # display generated answer
         if st.session_state['generated']:
             with self.response_container:
-                for i in range(len(st.session_state['generated'])):
-                    message(st.session_state["past"][i], is_user=True, key=str(i) + '_user')
-                    message(st.session_state["generated"][i], key=str(i))
+                self.update_chat()
+    
 
 
 if __name__ == '__main__':
