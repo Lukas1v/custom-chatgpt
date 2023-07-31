@@ -29,8 +29,7 @@ class chatBot():
         st.markdown("<h1 style='text-align: center;'> LVE Custom ChatGPT </h1>", unsafe_allow_html=True)
         st.sidebar.title("Sidebar")
         self.counter_placeholder = st.sidebar.empty()
-        
-                  
+                    
         # containers for chat history and text box
         self.response_container = st.container()  
         self.container = st.container()
@@ -108,8 +107,17 @@ class chatBot():
         # Map model names to Deployment id's, only 3.5 is available on Azure
         model_name = st.sidebar.radio("Choose a model:", ("GPT-3.5", "GPT-4 (under development)"))
         engine = self.set_model(model_name)
+        st.text("")
         #set temperature with slider
         temp_slider = st.sidebar.slider("Temperature", min_value=0.1, max_value=2.0, value=0.4, step=0.1)
+        st.text("")
+        # files
+        uploaded_files = st.sidebar.file_uploader(
+            'Upload files to be searched', 
+            type="pdf", 
+            accept_multiple_files=True)
+        if uploaded_files is not None:
+            pass
 
         return model_name, engine, temp_slider
     
