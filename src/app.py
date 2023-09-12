@@ -3,6 +3,8 @@ import openai
 import streamlit as st
 from streamlit_chat import message
 
+from pypdf import PdfReader
+
 ## Initialization
 #Azure openai details
 openai.api_type = "azure"
@@ -116,7 +118,7 @@ class chatBot():
             type="pdf", 
             accept_multiple_files=True)
         if uploaded_files is not None:
-            pass
+            self.parse_files(uploaded_files)
 
         return model_name, engine, temp_slider
     
@@ -138,7 +140,15 @@ class chatBot():
                 cost = (prompt_tokens * 0.028 + completion_tokens * 0.056) / 1000
             st.session_state['cost'].append(cost)
             st.session_state['total_cost'] += cost
+    
 
+    def parse_files(self, uploaded_files):
+        for pdf in uploaded_files:
+            reader = PdfReader(pdf)
+            number_of_pages = len(reader.pages)
+            page = reader.pages[0]
+            text = page.extract_text()
+            print(text)
 
     def update_chat(self):
         for i in range(len(st.session_state['generated'])):
