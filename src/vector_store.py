@@ -14,7 +14,13 @@ openai_ef = embedding_functions.OpenAIEmbeddingFunction(
 class vectorStore:
     def __init__(self, collection_name: str):
         self.client = chromadb.Client()
-        self.collection = self.client.create_collection(collection_name)
+        #check if collection already exists, delete and create new
+        try:
+            self.collection = self.client.delete_collection(name=collection_name)
+        except ValueError: 
+            pass
+        finally:
+            self.collection = self.client.create_collection(collection_name)
 
     def add_document(self, doc_id: str, text: str, metadata: Dict[str, Any] = None) -> None:
         self.collection.add(
