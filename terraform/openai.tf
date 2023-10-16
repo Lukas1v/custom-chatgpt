@@ -42,3 +42,18 @@ resource "azurerm_cognitive_deployment" "chatgpt_model" {
     type = "Standard"
   }
 }
+
+### Azure Open AI Model - Embeddings
+resource "azurerm_cognitive_deployment" "embeddings_model" {
+  name                 = "embeddings-model"
+  cognitive_account_id = resource.azurerm_cognitive_account.openai.id
+  model {
+    format  = "OpenAI"
+    name    = "text-embedding-ada-002"
+    version = "2"
+  }
+
+  scale {
+    type = "Standard"
+  }
+}
