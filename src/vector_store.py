@@ -1,13 +1,20 @@
+import os
+import toml
 import chromadb
 from chromadb.utils import embedding_functions
 from typing import Any, Dict, List
 
+
+with open("src/config.toml", "r") as file:
+    config = toml.load(file)
+
+
 openai_ef = embedding_functions.OpenAIEmbeddingFunction(
-                api_key="YOUR_API_KEY",
-                api_base="YOUR_API_BASE_PATH",
-                api_type="azure",
-                api_version="YOUR_API_VERSION",
-                model_name="text-embedding-ada-002"
+                api_key=os.getenv("OPENAI_API_KEY"),
+                api_base=os.getenv("OPENAI_ENDPOINT"),
+                api_type=config["openai"]["api_type"],
+                api_version=config["openai"]["api_version"],
+                model_name=config["openai"]["embeddings_model"] #text-embedding-ada-002
             )
 
 
@@ -20,13 +27,13 @@ class vectorStore:
         except ValueError: 
             pass
         finally:
-            self.collection = self.client.create_collection(collection_name)
+            self.collection = self.client.create_collection(collection_name, embedding_function=openai_ef)
 
     def add_document(self, doc_id: str, text: str, metadata: Dict[str, Any] = None) -> None:
         self.collection.add(
-            ids=[doc_id], # unique for each doc
-            documents=[text], # we handle tokenization, embedding, and indexing automatically. You can skip that and add your own embeddings as well
-            metadatas=metadata, # filter on these!
+            ids=[doc_id], 
+            documents=[text],
+            metadatas=metadata, # filter on these
         )
 
     def query(self, text: str, top_k: int = 1) -> List[Dict[str, Any]]:

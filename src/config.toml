@@ -1,0 +1,9 @@
+page_title="LVE Chatbot"
+title="LVE ChatbotCustom ChatGPT"
+
+[openai]
+api_type="azure"
+api_version="2023-05-15"
+embeddings_model="embeddings-model" 
+chatgpt3_model="custom-chatgpt-model"
+chatgpt4_model="custom-chatgpt-model"

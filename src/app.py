@@ -1,4 +1,5 @@
 import os
+import toml
 import openai
 import streamlit as st
 from streamlit_chat import message
@@ -6,28 +7,32 @@ from streamlit_chat import message
 from pypdf import PdfReader
 
 ## Initialization
-#Azure openai details
-openai.api_type = "azure"
+#load config
+with open("src/config.toml", "r") as file:
+    config = toml.load(file)
+
+#set Azure openai details
 openai.api_base = os.getenv("OPENAI_ENDPOINT") 
-openai.api_version = "2023-05-15"
 openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_type = config["openai"]["api_type"]
+openai.api_version = config["openai"]["api_version"]
 
 
 class chatBot():
     def __init__(self):
         #Azure openai engine
-        self.engine_v35='custom-chatgpt-model'
-        self.engine_v40='custom-chatgpt-model'
+        self.engine_v35=config["openai"]["chatgpt3_model"]
+        self.engine_v40=config["openai"]["chatgpt4_model"]
         self.msg_system = {"role": "system", "content": "You are a helpful assistant named Simon"}
         
         # Initialise streamlit and set page title
-        st.set_page_config(page_title="LVE Chatbot", page_icon=":robot_face:")
+        st.set_page_config(page_title=config["page_title"], page_icon=":robot_face:")
 
         # Initialise state
         self.init_state()
 
         # Setting  header and sidebar static properties
-        st.markdown("<h1 style='text-align: center;'> LVE Custom ChatGPT </h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center;'>" + config['title'] +" </h1>", unsafe_allow_html=True)
         st.sidebar.title("Sidebar")
         self.counter_placeholder = st.sidebar.empty()
                     
