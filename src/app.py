@@ -11,18 +11,19 @@ from pypdf import PdfReader
 with open("src/config.toml", "r") as file:
     config = toml.load(file)
 
-#set Azure openai details
-openai.api_base = os.getenv("OPENAI_ENDPOINT") 
+#set (Azure) openai details
 openai.api_key = os.getenv("OPENAI_API_KEY")
-openai.api_type = config["openai"]["api_type"]
-openai.api_version = config["openai"]["api_version"]
+if config["openai"]["api_type"] == "azure":
+    openai.api_base = os.getenv("OPENAI_ENDPOINT") 
+    openai.api_type = config["openai"]["api_type"]
+    openai.api_version = config["openai"]["api_version"]
 
 
 class chatBot():
     def __init__(self):
-        #Azure openai engine
-        self.engine_v35=config["openai"]["chatgpt3_model"]
-        self.engine_v40=config["openai"]["chatgpt4_model"]
+        #Azure openai model
+        self.model_v35=config["openai"]["chatgpt3_model"]
+        self.model_v40=config["openai"]["chatgpt4_model"]
         self.msg_system = {"role": "system", "content": "You are a helpful assistant named Simon"}
         
         # Initialise streamlit and set page title
@@ -78,22 +79,22 @@ class chatBot():
 
     def set_model(self, model_name):
         if model_name == "GPT-3.5":
-            engine = self.engine_v35
+            model = self.model_v35
         else:
-            engine = self.engine_v40 
-        return engine
+            model = self.model_v40 
+        return model
     
     def clear(self):
         self.clear_state()
         self.counter_placeholder.write(f"Total cost of this conversation: €{st.session_state['total_cost']:.5f}")
     
     
-    def generate_response(self,prompt, engine):
+    def generate_response(self,prompt, model):
         st.session_state['temperature']=0.4
         st.session_state['messages'].append({"role": "user", "content": prompt})
 
         completion = openai.ChatCompletion.create(
-            engine=engine,
+            model=model,
             messages=st.session_state['messages']
         )
         response = completion.choices[0].message.content
@@ -112,7 +113,7 @@ class chatBot():
 
         # Map model names to Deployment id's, only 3.5 is available on Azure
         model_name = st.sidebar.radio("Choose a model:", ("GPT-3.5", "GPT-4 (under development)"))
-        engine = self.set_model(model_name)
+        model = self.set_model(model_name)
         st.text("")
         #set temperature with slider
         temp_slider = st.sidebar.slider("Temperature", min_value=0.1, max_value=2.0, value=0.4, step=0.1)
@@ -125,13 +126,13 @@ class chatBot():
         if uploaded_files is not None:
             self.parse_files(uploaded_files)
 
-        return model_name, engine, temp_slider
+        return model_name, model, temp_slider
     
    
-    def fetch_main_input(self, model_name, temp_slider, engine):
+    def fetch_main_input(self, model_name, temp_slider, model):
         user_input = st.chat_input("You:", key='input')
         if user_input:
-            output, total_tokens, prompt_tokens, completion_tokens = self.generate_response(user_input, engine)
+            output, total_tokens, prompt_tokens, completion_tokens = self.generate_response(user_input, model)
             st.session_state['past'].append(user_input)
             st.session_state['generated'].append(output)
             st.session_state['model_name'].append(model_name)
@@ -165,7 +166,7 @@ class chatBot():
         ## Sidebar
         # fetch user input from sidebar
         clear_button = st.sidebar.button("Clear Conversation", key="clear")  
-        model_name, engine, temp_slider = self.fetch_sidebar_input()
+        model_name, model, temp_slider = self.fetch_sidebar_input()
 
         # reset everything
         if clear_button:
@@ -174,7 +175,7 @@ class chatBot():
         ## Main screen
         # Collect prompt
         with self.container:            
-            self.fetch_main_input(model_name, temp_slider, engine)
+            self.fetch_main_input(model_name, temp_slider, model)
 
         # display generated answer
         if st.session_state['generated']:

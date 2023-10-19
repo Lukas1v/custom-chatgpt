@@ -15,8 +15,8 @@ def chatbot():
 def test_init_vars(chatbot):  
     ''' test initialization of the variables''' 
     #types
-    assert isinstance(chatbot.engine_v35, str)
-    assert isinstance(chatbot.engine_v40, str)
+    assert isinstance(chatbot.model_v35, str)
+    assert isinstance(chatbot.model_v40, str)
     assert isinstance(chatbot.msg_system, dict)
     #msg_system should have the following keys
     assert 'role' in chatbot.msg_system, "msg_system should have the 'role' key"
@@ -59,8 +59,8 @@ def test_init_state(mocker, chatbot):
     app.st.session_state.__setitem__.assert_has_calls(expected_calls, any_order=True)
 
 def test_set_model(chatbot):
-    assert chatbot.set_model("GPT-3.5") == chatbot.engine_v35
-    assert chatbot.set_model("GPT-4 (under development)") == chatbot.engine_v40
+    assert chatbot.set_model("GPT-3.5") == chatbot.model_v35
+    assert chatbot.set_model("GPT-4 (under development)") == chatbot.model_v40
 
 
 ### chat tests

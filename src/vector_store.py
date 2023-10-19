@@ -8,14 +8,20 @@ from typing import Any, Dict, List
 with open("src/config.toml", "r") as file:
     config = toml.load(file)
 
-
-openai_ef = embedding_functions.OpenAIEmbeddingFunction(
+if config["openai"]["api_type"] == "azure":
+    openai_ef = embedding_functions.OpenAIEmbeddingFunction(
+                    api_key=os.getenv("OPENAI_API_KEY"),
+                    api_base=os.getenv("OPENAI_ENDPOINT"),
+                    api_type=config["openai"]["api_type"],
+                    api_version=config["openai"]["api_version"],
+                    model_name=config["openai"]["embeddings_model"] #text-embedding-ada-002
+                )
+else:
+    openai_ef = embedding_functions.OpenAIEmbeddingFunction(
                 api_key=os.getenv("OPENAI_API_KEY"),
-                api_base=os.getenv("OPENAI_ENDPOINT"),
-                api_type=config["openai"]["api_type"],
-                api_version=config["openai"]["api_version"],
                 model_name=config["openai"]["embeddings_model"] #text-embedding-ada-002
             )
+
 
 
 class vectorStore:
@@ -46,8 +52,8 @@ class vectorStore:
 
 
 if __name__=="__main__":
-    vs = vectorStore("auto")
-    vs.add_document("1","dit is een test")
-    vs.add_document("2","dit is een auto")
-    print(vs.query("auto"))
+    vs = vectorStore("car")
+    vs.add_document("1","this is a test")
+    vs.add_document("2","this is a car")
+    print(vs.query("car"))
 
