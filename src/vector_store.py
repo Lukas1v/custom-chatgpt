@@ -53,7 +53,9 @@ class vectorStore:
 
 if __name__=="__main__":
     vs = vectorStore("car")
-    vs.add_document("1","this is a test")
+    vs.add_document("1","this is a laptop")
     vs.add_document("2","this is a car")
-    print(vs.query("car"))
+    vs.add_document("3","the bike is red")
+    result = vs.query("automobile is red")
+    print(result['documents'][0][0])
 

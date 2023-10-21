@@ -3,8 +3,8 @@ import toml
 import openai
 import streamlit as st
 from streamlit_chat import message
-
 from pypdf import PdfReader
+from vector_store import vectorStore
 
 ## Initialization
 #load config
@@ -37,9 +37,10 @@ class chatBot():
         st.sidebar.title("Sidebar")
         self.counter_placeholder = st.sidebar.empty()
                     
-        # containers for chat history and text box
+        # containers for chat history, text box and vector store
         self.response_container = st.container()  
         self.container = st.container()
+        self.vector_store = None #placeholder
 
 
     def init_state(self):
@@ -146,15 +147,26 @@ class chatBot():
                 cost = (prompt_tokens * 0.028 + completion_tokens * 0.056) / 1000
             st.session_state['cost'].append(cost)
             st.session_state['total_cost'] += cost
+
     
 
     def parse_files(self, uploaded_files):
-        for pdf in uploaded_files:
+        self.vector_store = vectorStore("test")
+
+        for pdf in uploaded_files:            
             reader = PdfReader(pdf)
-            number_of_pages = len(reader.pages)
-            page = reader.pages[0]
-            text = page.extract_text()
-            print(text)
+            n_pages = len(reader.pages)
+            for i in range(n_pages):
+                doc_id = f"{pdf.name}-p{str(i)}"
+                page = reader.pages[i]
+                text = page.extract_text()
+                self.vector_store.add_document(doc_id, text)
+    
+
+    def query_files(self, query: str):
+        result = self.vector_store.query(query)
+        return result['documents'][0][0]
+
 
     def update_chat(self):
         for i in range(len(st.session_state['generated'])):
