@@ -88,25 +88,7 @@ class chatBot():
     def clear(self):
         self.clear_state()
         self.counter_placeholder.write(f"Total cost of this conversation: €{st.session_state['total_cost']:.5f}")
-    
-    
-    def generate_response(self,prompt, model):
-        st.session_state['temperature']=0.4
-        st.session_state['messages'].append({"role": "user", "content": prompt})
-
-        completion = openai.ChatCompletion.create(
-            model=model,
-            messages=st.session_state['messages']
-        )
-        response = completion.choices[0].message.content
-        st.session_state['messages'].append({"role": "assistant", "content": response})
-
-        # print(st.session_state['messages'])
-        total_tokens = completion.usage.total_tokens
-        prompt_tokens = completion.usage.prompt_tokens
-        completion_tokens = completion.usage.completion_tokens
-        return response, total_tokens, prompt_tokens, completion_tokens
-    
+      
 
     def fetch_sidebar_input(self):        
         # let user choose model, show total cost of current conversation, and let user clear the current conversation  
@@ -133,20 +115,42 @@ class chatBot():
     def fetch_main_input(self, model_name, temp_slider, model):
         user_input = st.chat_input("You:", key='input')
         if user_input:
-            output, total_tokens, prompt_tokens, completion_tokens = self.generate_response(user_input, model)
-            st.session_state['past'].append(user_input)
-            st.session_state['generated'].append(output)
-            st.session_state['model_name'].append(model_name)
-            st.session_state['total_tokens'].append(total_tokens)
-            st.session_state['temperature'] = temp_slider
+            self.process_input(user_input, model, model_name, temp_slider)
 
-            # from https://openai.com/pricing#language-models
-            if model_name == "GPT-3.5":
-                cost = total_tokens * 0.001835 / 1000
-            else:
-                cost = (prompt_tokens * 0.028 + completion_tokens * 0.056) / 1000
-            st.session_state['cost'].append(cost)
-            st.session_state['total_cost'] += cost
+
+    def process_input(self,prompt, model, model_name, temp_slider):
+        output, total_tokens, prompt_tokens, completion_tokens = self.generate_response(prompt, model)
+        st.session_state['past'].append(prompt)
+        st.session_state['generated'].append(output)
+        st.session_state['model_name'].append(model_name)
+        st.session_state['total_tokens'].append(total_tokens)
+        st.session_state['temperature'] = temp_slider
+
+        # from https://openai.com/pricing#language-models
+        if model_name == "GPT-3.5":
+            cost = total_tokens * 0.001835 / 1000
+        else:
+            cost = (prompt_tokens * 0.028 + completion_tokens * 0.056) / 1000
+        st.session_state['cost'].append(cost)
+        st.session_state['total_cost'] += cost
+    
+
+    def generate_response(self,prompt, model):
+        st.session_state['temperature']=0.4
+        st.session_state['messages'].append({"role": "user", "content": prompt})
+
+        completion = openai.ChatCompletion.create(
+            model=model,
+            messages=st.session_state['messages']
+        )
+        response = completion.choices[0].message.content
+        st.session_state['messages'].append({"role": "assistant", "content": response})
+
+        # print(st.session_state['messages'])
+        total_tokens = completion.usage.total_tokens
+        prompt_tokens = completion.usage.prompt_tokens
+        completion_tokens = completion.usage.completion_tokens
+        return response, total_tokens, prompt_tokens, completion_tokens
 
     
 
@@ -161,6 +165,7 @@ class chatBot():
                 page = reader.pages[i]
                 text = page.extract_text()
                 self.vector_store.add_document(doc_id, text)
+        
     
 
     def query_files(self, query: str):
