@@ -49,6 +49,10 @@ class vectorStore:
             # where={"metadata_field": "is_equal_to_this"}, # optional filter
             )
         return results
+    
+    def count_docs(self):
+        return self.collection.count() 
+
 
 
 if __name__=="__main__":

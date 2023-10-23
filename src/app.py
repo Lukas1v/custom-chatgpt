@@ -19,6 +19,18 @@ if config["openai"]["api_type"] == "azure":
     openai.api_version = config["openai"]["api_version"]
 
 
+def get_pdf_prompt(document: str, user_input: str) -> str: 
+    return f"""
+            You are only allowed to answer questions using the document that is provided.
+            The question is between '~~~', the document between '|||'                
+            If you cannot find back the answer in the document, say you cannot find it back with the provided info.
+            If you find an answer based on another source, add this as a disclaimer.
+            If you are not sure about the answer, admit you are not sure.
+            Question: ~~~ {user_input} ~~~
+            Document: ||| {document} |||
+            """   
+
+
 class chatBot():
     def __init__(self):
         #Azure openai model
@@ -90,7 +102,7 @@ class chatBot():
         self.counter_placeholder.write(f"Total cost of this conversation: €{st.session_state['total_cost']:.5f}")
       
 
-    def fetch_sidebar_input(self):        
+    def fetch_sidebar_settings(self):        
         # let user choose model, show total cost of current conversation, and let user clear the current conversation  
         self.counter_placeholder.write(f"Total cost of this conversation: €{st.session_state['total_cost']:.5f}")        
 
@@ -101,21 +113,28 @@ class chatBot():
         #set temperature with slider
         temp_slider = st.sidebar.slider("Temperature", min_value=0.1, max_value=2.0, value=0.4, step=0.1)
         st.text("")
-        # files
-        uploaded_files = st.sidebar.file_uploader(
-            'Upload files to be searched', 
-            type="pdf", 
-            accept_multiple_files=True)
-        if uploaded_files is not None:
-            self.parse_files(uploaded_files)
 
         return model_name, model, temp_slider
     
-   
+
+    def fetch_sidebar_files(self):   
+        # files
+        uploaded_files = st.sidebar.file_uploader(
+                            "Upload files to be searched", 
+                            type="pdf", 
+                            accept_multiple_files=True)
+        return uploaded_files        
+
+  
     def fetch_main_input(self, model_name, temp_slider, model):
-        user_input = st.chat_input("You:", key='input')
+        user_input = st.chat_input("You:", key="input")        
         if user_input:
-            self.process_input(user_input, model, model_name, temp_slider)
+            if self.vector_store.count_docs() > 0:
+                 document = self.find_pdf_page(user_input)
+                 prompt = get_pdf_prompt(document, user_input)  
+            else:
+                prompt = user_input         
+            self.process_input(prompt, model, model_name, temp_slider)
 
 
     def process_input(self,prompt, model, model_name, temp_slider):
@@ -153,10 +172,9 @@ class chatBot():
         return response, total_tokens, prompt_tokens, completion_tokens
 
     
-
     def parse_files(self, uploaded_files):
-        self.vector_store = vectorStore("test")
-
+        #TODO: user smaller chunks than pages
+        self.vector_store = vectorStore("test") #TODO: use UUID
         for pdf in uploaded_files:            
             reader = PdfReader(pdf)
             n_pages = len(reader.pages)
@@ -165,13 +183,12 @@ class chatBot():
                 page = reader.pages[i]
                 text = page.extract_text()
                 self.vector_store.add_document(doc_id, text)
-        
-    
+         
 
-    def query_files(self, query: str):
+    def find_pdf_page(self, query: str):
         result = self.vector_store.query(query)
         return result['documents'][0][0]
-
+    
 
     def update_chat(self):
         for i in range(len(st.session_state['generated'])):
@@ -181,9 +198,14 @@ class chatBot():
 
     def run(self):
         ## Sidebar
-        # fetch user input from sidebar
+        # fetch user settings from sidebar
         clear_button = st.sidebar.button("Clear Conversation", key="clear")  
-        model_name, model, temp_slider = self.fetch_sidebar_input()
+        model_name, model, temp_slider = self.fetch_sidebar_settings()
+
+         # process pdf content
+        uploaded_files = self.fetch_sidebar_files()
+        if uploaded_files is not None:
+            self.parse_files(uploaded_files)
 
         # reset everything
         if clear_button:
