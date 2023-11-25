@@ -19,23 +19,23 @@ if config["openai"]["api_type"] == "azure":
     openai.api_version = config["openai"]["api_version"]
 
 
-def get_pdf_prompt(document: str, user_input: str) -> str: 
-    return f"""
-            You are only allowed to answer questions using the document that is provided.
-            The question is between '~~~', the document between '|||'                
-            If you cannot find back the answer in the document, say you cannot find it back with the provided info.
+def get_pdf_prompt(document: str, ) -> str: 
+    pdf_instructions = f"""
+            You should answer questions using the document that is provided, the document is between '|||'                
+            If you cannot find back the answer in the document, say you cannot find it back with the provided document.
             If you find an answer based on another source, add this as a disclaimer.
             If you are not sure about the answer, admit you are not sure.
-            Question: ~~~ {user_input} ~~~
             Document: ||| {document} |||
+            Say thank you for this document and confirm you are ready for questions.
             """   
-
+    prompt = {"role": "system", "content": pdf_instructions}
+    return prompt
 
 class chatBot():
     def __init__(self):
         #Azure openai model
         self.model_v35=config["openai"]["chatgpt3_model"]
-        self.model_v40=config["openai"]["chatgpt4_model"]
+        self.model_v40=config["openai"]["chatgpt4_model"]        
         self.msg_system = {"role": "system", "content": "You are a helpful assistant named Simon"}
         
         # Initialise streamlit and set page title
@@ -43,6 +43,7 @@ class chatBot():
 
         # Initialise state
         self.init_state()
+        self.uploaded_files = None #placeholder
 
         # Setting  header and sidebar static properties
         st.markdown("<h1 style='text-align: center;'>" + config['title'] +" </h1>", unsafe_allow_html=True)
@@ -127,23 +128,33 @@ class chatBot():
 
   
     def fetch_main_input(self, model_name, temp_slider, model):
-        user_input = st.chat_input("You:", key="input")        
-        if user_input:
-            if self.vector_store.count_docs() > 0:
-                 document = self.find_pdf_page(user_input)
-                 prompt = get_pdf_prompt(document, user_input)  
-            else:
-                prompt = user_input         
-            self.process_input(prompt, model, model_name, temp_slider)
+        user_input = st.chat_input("You:", key="input") 
+        pdf_prompt = None 
+              
+        #process user_input
+        if user_input is not None:
+            prompt = user_input  
+
+            #check if there is a vector store and if it contains docs
+            if self.vector_store is not None:
+                if self.vector_store.count_docs() > 0:
+                    document = self.find_pdf_page(user_input)
+                    pdf_prompt = get_pdf_prompt(document)                     
+            
+            #process the prompt, enriched with pdf data if provided
+            self.process_input(prompt, model, model_name, temp_slider, pdf_prompt)
 
 
-    def process_input(self,prompt, model, model_name, temp_slider):
-        output, total_tokens, prompt_tokens, completion_tokens = self.generate_response(prompt, model)
-        st.session_state['past'].append(prompt)
-        st.session_state['generated'].append(output)
-        st.session_state['model_name'].append(model_name)
-        st.session_state['total_tokens'].append(total_tokens)
-        st.session_state['temperature'] = temp_slider
+    def process_input(self,user_prompt, model, model_name, temp_slider, pdf_prompt=None):
+        if pdf_prompt is not None:
+            pdf_total_tokens, pdf_prompt_tokens, pdf_completion_tokens = self.process_prompt(pdf_prompt, True, model, model_name, temp_slider)
+        else:
+            pdf_total_tokens, pdf_prompt_tokens, pdf_completion_tokens = 0,0,0
+
+        user_total_tokens, user_prompt_tokens, user_completion_tokens = self.process_prompt(user_prompt, False, model, model_name, temp_slider)
+        total_tokens = pdf_total_tokens + user_total_tokens
+        prompt_tokens = pdf_prompt_tokens + user_prompt_tokens
+        completion_tokens = pdf_completion_tokens + user_completion_tokens
 
         # from https://openai.com/pricing#language-models
         if model_name == "GPT-3.5":
@@ -154,10 +165,26 @@ class chatBot():
         st.session_state['total_cost'] += cost
     
 
-    def generate_response(self,prompt, model):
-        st.session_state['temperature']=0.4
-        st.session_state['messages'].append({"role": "user", "content": prompt})
+    def process_prompt(self,prompt, system_prompt, model, model_name, temp_slider):
+        output, total_tokens, prompt_tokens, completion_tokens = self.generate_response(prompt, system_prompt, model)
+        st.session_state['past'].append(prompt)
+        st.session_state['generated'].append(output)
+        st.session_state['model_name'].append(model_name)
+        st.session_state['total_tokens'].append(total_tokens)
+        st.session_state['temperature'] = temp_slider
 
+        return total_tokens, prompt_tokens, completion_tokens
+    
+
+    def generate_response(self, prompt, system_prompt, model):
+        st.session_state['temperature']=0.4
+
+        if system_prompt:
+            st.session_state['messages'].append(prompt) #pdf prompt is a system prompt that has already been constructed #TODO align with user prompt that still has to be constructed
+        else:
+            st.session_state['messages'].append({"role": "user", "content": prompt})
+
+        print('debug prompt', st.session_state['messages'])
         completion = openai.ChatCompletion.create(
             model=model,
             messages=st.session_state['messages']
@@ -172,10 +199,10 @@ class chatBot():
         return response, total_tokens, prompt_tokens, completion_tokens
 
     
-    def parse_files(self, uploaded_files):
+    def parse_files(self):
         #TODO: user smaller chunks than pages
         self.vector_store = vectorStore("test") #TODO: use UUID
-        for pdf in uploaded_files:            
+        for pdf in self.uploaded_files:            
             reader = PdfReader(pdf)
             n_pages = len(reader.pages)
             for i in range(n_pages):
@@ -204,8 +231,10 @@ class chatBot():
 
          # process pdf content
         uploaded_files = self.fetch_sidebar_files()
-        if uploaded_files is not None:
-            self.parse_files(uploaded_files)
+        if isinstance(uploaded_files, list) and len(uploaded_files)>0:
+            self.uploaded_files = uploaded_files
+            # self.clear_state()            
+            self.parse_files()
 
         # reset everything
         if clear_button:

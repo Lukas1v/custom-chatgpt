@@ -1,5 +1,5 @@
 page_title="LVE Chatbot"
-title="LVE ChatbotCustom ChatGPT"
+title="Custom ChatGPT"
 
 [openai]
 # api_type="azure"
