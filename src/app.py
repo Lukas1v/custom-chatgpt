@@ -129,7 +129,7 @@ class chatBot():
   
     def fetch_main_input(self, model_name, temp_slider, model):
         user_input = st.chat_input("You:", key="input") 
-        pdf_prompt = None 
+        document = None 
               
         #process user_input
         if user_input is not None:
@@ -139,14 +139,15 @@ class chatBot():
             if self.vector_store is not None:
                 if self.vector_store.count_docs() > 0:
                     document = self.find_pdf_page(user_input)
-                    pdf_prompt = get_pdf_prompt(document)                     
+                    # pdf_prompt = get_pdf_prompt(document)                     
             
             #process the prompt, enriched with pdf data if provided
-            self.process_input(prompt, model, model_name, temp_slider, pdf_prompt)
+            self.process_input(prompt, model, model_name, temp_slider, document)
 
 
-    def process_input(self,user_prompt, model, model_name, temp_slider, pdf_prompt=None):
-        if pdf_prompt is not None:
+    def process_input(self,user_prompt, model, model_name, temp_slider, document=None):
+        if document is not None:
+            #TODO
             pdf_total_tokens, pdf_prompt_tokens, pdf_completion_tokens = self.process_prompt(pdf_prompt, True, model, model_name, temp_slider)
         else:
             pdf_total_tokens, pdf_prompt_tokens, pdf_completion_tokens = 0,0,0
