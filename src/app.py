@@ -14,8 +14,8 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 class chatBot():
     def __init__(self):
         #Azure openai engine
-        self.engine_v35='custom-chatgpt-model'
-        self.engine_v40='custom-chatgpt-model'
+        self.engine_v35='gpt-4o-mini'
+        self.engine_v40='gpt-4o-mini'
         self.msg_system = {"role": "system", "content": "You are a helpful assistant named Simon"}
         
         # Initialise streamlit and set page title
