@@ -1,2 +1,4 @@
 *.pyc
 terraform/.terraform*
+.devcontainer/devcontainer.env
+

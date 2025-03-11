@@ -1,0 +1,12 @@
+page_title="LVE Chatbot"
+title="Custom ChatGPT"
+
+[openai]
+# api_type="azure"
+# api_version="2023-05-15"
+api_type="None"
+embeddings_model="text-embedding-ada-002"
+chatgpt3_model="o1"
+chatgpt4_model="o3-mini"
+
+
