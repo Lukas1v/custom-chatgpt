@@ -106,7 +106,7 @@ class chatBot():
         # self.counter_placeholder.write(f"Total cost of this conversation: €{st.session_state['total_cost']:.5f}")        
 
         # Map model names to Deployment id's, only 3.5 is available on Azure
-        model_name = st.sidebar.radio("Choose a model:", ("GPT-3.5", "GPT-4 (under development)"))
+        model_name = st.sidebar.radio("Choose a model:", ("o1", "o3 mini"))
         model = self.set_model(model_name)
         st.text("")
         #set temperature with slider
@@ -174,7 +174,7 @@ class chatBot():
         else:
             st.session_state['messages'].append({"role": "user", "content": prompt})
 
-        print('debug prompt', st.session_state['messages'])
+        # print('debug prompt', st.session_state['messages'])
         completion = openai.ChatCompletion.create(
             model=model,
             messages=st.session_state['messages']
