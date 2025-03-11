@@ -33,10 +33,12 @@ def get_pdf_prompt(document: str, ) -> str:
 
 class chatBot():
     def __init__(self):
+
         #Azure openai model
         self.model_v35=config["openai"]["chatgpt3_model"]
         self.model_v40=config["openai"]["chatgpt4_model"]        
-        self.msg_system = {"role": "system", "content": "You are a helpful assistant named Simon"}
+
+      self.msg_system = {"role": "system", "content": "You are a helpful assistant named Simon"}
         
         # Initialise streamlit and set page title
         st.set_page_config(page_title=config["page_title"], page_icon=":robot_face:")
