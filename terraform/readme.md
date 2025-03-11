@@ -1,0 +1,1 @@
+Setting up Azure resources is optional, you can also just use the OpenAI API.
