@@ -68,7 +68,10 @@ Execute the test suite with:
 pytest tests/
 ```
 
-
+## TODO
+- Upgrade OpenAI library: https://github.com/openai/openai-python/discussions/742
+- Improve the RAG functionality
+- Remove hard coded references to models
 
 ## Contributing
 Feel free to open an issue or submit a pull request.

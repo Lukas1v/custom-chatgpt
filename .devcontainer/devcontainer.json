@@ -1,6 +1,6 @@
 {
     "name": "tf-codespace",
-    "image": "mcr.microsoft.com/vscode/devcontainers/python:3.9",
+    "image": "mcr.microsoft.com/vscode/devcontainers/python:3.11",
     "settings": {
       "terminal.integrated.shell.linux": "/bin/bash"
       },
