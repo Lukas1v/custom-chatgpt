@@ -52,9 +52,7 @@ def test_init_state(mocker, chatbot):
         mocker.call.__setitem__('messages', [{"role": "system", "content": "You are a helpful assistant named Simon"}]),
         mocker.call.__setitem__('temperature', []),
         mocker.call.__setitem__('model_name', []),
-        mocker.call.__setitem__('cost', []),
-        mocker.call.__setitem__('total_tokens', []),
-        mocker.call.__setitem__('total_cost', 0.0)
+        mocker.call.__setitem__('total_tokens', [])
     ]
     app.st.session_state.__setitem__.assert_has_calls(expected_calls, any_order=True)
 
@@ -84,9 +82,7 @@ def clear_state(mocker, chatbot):
         mocker.call.__setitem__('messages', [{"role": "system", "content": "You are a helpful assistant named Simon"}]),
         mocker.call.__setitem__('temperature', []),
         mocker.call.__setitem__('model_name', []),
-        mocker.call.__setitem__('cost', []),
         mocker.call.__setitem__('total_tokens', []),
-        mocker.call.__setitem__('total_cost', 0.0),
         mocker.call.__setitem__('number_tokens', [])
     ]
     app.st.session_state.__setitem__.assert_has_calls(expected_calls, any_order=True)

@@ -87,8 +87,6 @@ class chatBot():
         st.session_state['temperature'] = []
         st.session_state['number_tokens'] = []
         st.session_state['model_name'] = []
-        st.session_state['cost'] = []
-        st.session_state['total_cost'] = 0.0
         st.session_state['total_tokens'] = []
 
     def set_model(self, model_name):
@@ -105,7 +103,7 @@ class chatBot():
 
     def fetch_sidebar_settings(self):        
         # let user choose model, show total cost of current conversation, and let user clear the current conversation  
-        self.counter_placeholder.write(f"Total cost of this conversation: €{st.session_state['total_cost']:.5f}")        
+        # self.counter_placeholder.write(f"Total cost of this conversation: €{st.session_state['total_cost']:.5f}")        
 
         # Map model names to Deployment id's, only 3.5 is available on Azure
         model_name = st.sidebar.radio("Choose a model:", ("GPT-3.5", "GPT-4 (under development)"))
@@ -153,17 +151,8 @@ class chatBot():
             pdf_total_tokens, pdf_prompt_tokens, pdf_completion_tokens = 0,0,0
 
         user_total_tokens, user_prompt_tokens, user_completion_tokens = self.process_prompt(user_prompt, False, model, model_name, temp_slider)
-        total_tokens = pdf_total_tokens + user_total_tokens
-        prompt_tokens = pdf_prompt_tokens + user_prompt_tokens
-        completion_tokens = pdf_completion_tokens + user_completion_tokens
+ 
 
-        # from https://openai.com/pricing#language-models
-        if model_name == "GPT-3.5":
-            cost = total_tokens * 0.001835 / 1000
-        else:
-            cost = (prompt_tokens * 0.028 + completion_tokens * 0.056) / 1000
-        st.session_state['cost'].append(cost)
-        st.session_state['total_cost'] += cost
     
 
     def process_prompt(self,prompt, system_prompt, model, model_name, temp_slider):
