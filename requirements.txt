@@ -1,5 +1,5 @@
 chromadb==0.4.15
-openai==0.28.0
+openai==1.65.5
 pypdf==5.2.0
 pytest==8.2.0
 pytest-mock==3.12.0
