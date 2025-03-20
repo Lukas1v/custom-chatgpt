@@ -36,7 +36,7 @@ def get_pdf_prompt(document: str) -> dict:
     """
     return {"role": "system", "content": pdf_instructions}
 
-class ChatBot:
+class chatBot:
     def __init__(self):
         """
         Initializes the chatbot with configuration settings, Streamlit UI elements, and session states.
@@ -44,19 +44,19 @@ class ChatBot:
         self.model_v35 = config["openai"]["chatgpt3_model"]
         self.model_v40 = config["openai"]["chatgpt4_model"]
         self.msg_system = {"role": "system", "content": "You are a helpful assistant named Simon"}
-        
+
         # Set up Streamlit page
         st.set_page_config(page_title=config["page_title"], page_icon=":robot_face:")
-        
+
         # Initialize session states
         self.init_state()
         self.uploaded_files = None
-        
+
         # Set header and sidebar
         st.markdown(f"<h1 style='text-align: center;'>{config['title']}</h1>", unsafe_allow_html=True)
         st.sidebar.title("Sidebar")
         self.counter_placeholder = st.sidebar.empty()
-        
+
         # Containers for UI elements
         self.response_container = st.container()
         self.container = st.container()
@@ -165,5 +165,5 @@ class ChatBot:
                 self.update_chat()
 
 if __name__ == '__main__':
-    cb = ChatBot()
+    cb = chatBot()
     cb.run()

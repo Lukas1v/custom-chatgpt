@@ -11,6 +11,8 @@ DEBIAN_FRONTEND=dialog
 #install python packages
 pip install --upgrade pip
 pip install -r requirements.txt
+#pre-commit hooks
+pre-commit install
 
 #install Terraform
 getLatestVersion() {

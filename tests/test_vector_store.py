@@ -10,14 +10,14 @@ import chromadb
 @pytest.fixture
 def vector_store_instance():
     # Define the collection name
-    collection_name = "test_collection"   
+    collection_name = "test_collection"
     return vectorStore(collection_name)
-    
+
 
 # Write test cases
 def test_initialization(vector_store_instance):
     assert isinstance(vector_store_instance, vectorStore)
-    assert isinstance(vector_store_instance.client, chromadb.api.segment.SegmentAPI)
+    assert isinstance(vector_store_instance.client, chromadb.api.client.Client)
     assert vector_store_instance.collection.name == "test_collection"
 
 def test_add_query_document(vector_store_instance):
