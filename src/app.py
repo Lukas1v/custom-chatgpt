@@ -4,6 +4,7 @@ import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 import os
+import re
 import toml
 import openai
 import streamlit as st
@@ -85,7 +86,7 @@ class chatBot:
 
     def fetch_sidebar_settings(self):
         """Fetches user-selected model and temperature settings from the sidebar."""
-        model_name = st.sidebar.radio("Choose a model:", ("o1", "o3 mini"))
+        model_name = st.sidebar.radio("Choose a model:", (config["openai"]["chatgpt3_model"],config["openai"]["chatgpt4_model"]))
         model = self.set_model(model_name)
         temp_slider = st.sidebar.slider("Temperature", min_value=0.1, max_value=2.0, value=0.4, step=0.1)
         return model_name, model, temp_slider
@@ -125,7 +126,12 @@ class chatBot:
             messages=st.session_state['messages']
         )
         response = completion.choices[0].message.content
+
+        #post processing of response
+        if "```" not in response and "def " in response:  # crude heuristic for missing markdown
+            response = f"```python\n{response.strip()}\n```"
         st.session_state['messages'].append({"role": "assistant", "content": response})
+
         return response, completion.usage.total_tokens
 
     def parse_files(self):
@@ -143,10 +149,12 @@ class chatBot:
         return self.vector_store.query(query)['documents'][0][0]
 
     def update_chat(self):
-        """Updates the chat interface with past messages and responses."""
+        """Updates the chat interface with past messages and responses using Streamlit's native chat_message."""
         for i in range(len(st.session_state['generated'])):
-            message(st.session_state["past"][i], is_user=True, key=f"{i}_user")
-            message(st.session_state["generated"][i], key=str(i))
+            with st.chat_message("user"):
+                st.markdown(st.session_state["past"][i])
+            with st.chat_message("assistant"):
+                st.markdown(st.session_state["generated"][i])
 
     def run(self):
         """Runs the chatbot application."""

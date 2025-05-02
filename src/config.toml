@@ -6,7 +6,5 @@ title="Custom ChatGPT"
 # api_version="2023-05-15"
 api_type="None"
 embeddings_model="text-embedding-ada-002"
-chatgpt3_model="o1"
-chatgpt4_model="o3-mini"
-
-
+chatgpt3_model="o4-mini"
+chatgpt4_model="gpt-4o"
